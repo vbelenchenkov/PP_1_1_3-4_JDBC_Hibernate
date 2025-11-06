@@ -1,0 +1,8 @@
+.idea/
+target/
+*.iml
+*.iws
+*.ipr
+.DS_Store
+Thumbs.db
+*.logbash

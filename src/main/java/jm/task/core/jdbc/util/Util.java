@@ -12,7 +12,7 @@ public class Util {
     private final static String PWD = "1111";
     private final static String DRV = "com.mysql.cj.jdbc.Driver";
 
-    public static Connection getConnection(){
+    public Connection getConnection(){
         Connection connection = null;
         try {
             Class.forName(DRV);
