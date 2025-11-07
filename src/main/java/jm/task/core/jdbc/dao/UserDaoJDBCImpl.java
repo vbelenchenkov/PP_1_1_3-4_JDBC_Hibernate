@@ -7,11 +7,16 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.util.logging.Logger;
+
 public class UserDaoJDBCImpl implements UserDao {
-    private final Connection connection;
+
+    private static final Logger logger = Logger.getLogger(UserDaoJDBCImpl.class.getName());
+
+    private final Connection connection = Util.getConnection();
 
     public UserDaoJDBCImpl() {
-        this.connection = new Util().getConnection();
+
     }
 
     private static final String CREATE_TABLE_SQL =
@@ -32,18 +37,18 @@ public class UserDaoJDBCImpl implements UserDao {
     public void createUsersTable() {
         try (Statement statement = connection.createStatement()) {
             statement.executeUpdate(CREATE_TABLE_SQL);
-            System.out.println("Table has been created");
+            logger.info("The table has been created");
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.severe("Table creation error: " + e.getMessage());
         }
     }
 
     public void dropUsersTable() {
         try (Statement statement = connection.createStatement()) {
             statement.executeUpdate(DROP_TABLE_SQL);
-            System.out.println("Table has been deleted");
+            logger.info("Table has been deleted");
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.severe("Table deletion error: " + e.getMessage());
         }
     }
 
@@ -53,9 +58,9 @@ public class UserDaoJDBCImpl implements UserDao {
             preparedStatement.setString(2, lastName);
             preparedStatement.setByte(3, age);
             preparedStatement.executeUpdate();
-            System.out.println("New user has been added");
+            logger.info("New user " + name +" has been added to the DB");
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.severe("User: " + name + "addition error" + e.getMessage());
         }
     }
 
@@ -63,9 +68,9 @@ public class UserDaoJDBCImpl implements UserDao {
         try (PreparedStatement preparedStatement = connection.prepareStatement(REMOVE_USER_SQL)) {
             preparedStatement.setLong(1, id);
             preparedStatement.executeUpdate();
-            System.out.println("The user has been deleted");
+            logger.info("User whith id = " + id + " has been removed from DB");
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.severe("User removement error: " + e.getMessage());
         }
     }
 
@@ -83,7 +88,7 @@ public class UserDaoJDBCImpl implements UserDao {
                 users.add(user);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.severe("Getting list of users error: " + e.getMessage());
         }
         return users;
     }
@@ -91,9 +96,9 @@ public class UserDaoJDBCImpl implements UserDao {
     public void cleanUsersTable() {
         try (Statement statement = connection.createStatement()) {
             statement.executeUpdate(CLEAN_TABLE_SQL);
-            System.out.println("All users have been deleted");
+            logger.info("All users have been deleted");
         } catch (SQLException e) {
-            e.printStackTrace();
+            logger.severe("Cleaning users table error: " + e.getMessage());
         }
     }
 }
