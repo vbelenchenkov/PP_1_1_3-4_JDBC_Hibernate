@@ -1,12 +1,11 @@
 package jm.task.core.jdbc.dao;
 
 import jm.task.core.jdbc.model.User;
+import jm.task.core.jdbc.util.Util;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.cfg.Configuration;
-import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.Transaction;
 import org.hibernate.query.NativeQuery;
-import org.hibernate.service.ServiceRegistry;
 
 import java.util.List;
 
@@ -16,6 +15,7 @@ public class UserDaoHibernateImpl implements UserDao {
             "CREATE TABLE IF NOT EXISTS users (" +
             "id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
             "name VARCHAR(45) NOT NULL, " +
+            "lastName VARCHAR(45) NOT NULL, " +
             "age TINYINT NOT NULL)";
 
     private static final String DROP_TABLE_SQL = "DROP TABLE IF EXISTS users";
@@ -23,142 +23,91 @@ public class UserDaoHibernateImpl implements UserDao {
     private final SessionFactory sessionFactory;
 
     public UserDaoHibernateImpl() {
-        this.sessionFactory = createSessionFactory();
+        this.sessionFactory = Util.getSessionFactory();
     }
 
-    private SessionFactory createSessionFactory() {
-        try {
-            Configuration configuration = new Configuration();
-
-            configuration.setProperty("hibernate.connection.driver_class", "com.mysql.cj.jdbc.Driver");
-            configuration.setProperty("hibernate.connection.url", "jdbc:mysql://localhost:3306/jdbc_test");
-            configuration.setProperty("hibernate.connection.username", "root");
-            configuration.setProperty("hibernate.connection.password", "1111");
-
-            configuration.setProperty("hibernate.dialect", "org.hibernate.dialect.MySQL8Dialect");
-            configuration.setProperty("hibernate.show_sql", "true");
-            configuration.setProperty("hibernate.hbm2ddl.auto", "update");
-
-            configuration.addAnnotatedClass(User.class);
-
-            ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder()
-                    .applySettings(configuration.getProperties()).build();
-
-            return configuration.buildSessionFactory(serviceRegistry);
-        } catch (Exception e) {
-            throw new RuntimeException("SessionFactory creation error", e);
-        }
-    }
 
     @Override
     public void createUsersTable() {
 
-        Session session = sessionFactory.openSession();
-        try {
-            session.beginTransaction();
-            NativeQuery<?> query = session.createNativeQuery(CREATE_TABLE_SQL);
-            query.executeUpdate();
-
-            session.getTransaction().commit();
-            System.out.println("users table has been created (Hibernate).");
-        } catch (Exception e) {
-            if(session.getTransaction() != null) {
-                session.getTransaction().rollback();
-            } throw new RuntimeException("Table creation error", e);
-        } finally {
-            session.close();
+        try (Session session = sessionFactory.openSession()) {
+            Transaction transaction = session.beginTransaction();
+            try {
+                NativeQuery<?> query = session.createNativeQuery(CREATE_TABLE_SQL);
+                query.executeUpdate();
+                transaction.commit();
+            } catch (Exception e) {
+                transaction.rollback();
+                throw new RuntimeException("Table creation error", e);
+            }
         }
     }
 
     @Override
     public void dropUsersTable() {
-        Session session = sessionFactory.openSession();
-        try {
-            session.beginTransaction();
-
-            NativeQuery<?> query = session.createNativeQuery(DROP_TABLE_SQL);
-            query.executeUpdate();
-
-            session.getTransaction().commit();
-            System.out.println("users table has been deleted (Hibernate).");
-        } catch (Exception e) {
-            if (session.getTransaction() != null) {
-                session.getTransaction().rollback();
-            } throw new RuntimeException("Table deletion error", e);
-        } finally {
-            session.close();
+        try (Session session = sessionFactory.openSession()) {
+            Transaction transaction = session.beginTransaction();
+            try {
+                NativeQuery<?> query = session.createNativeQuery(DROP_TABLE_SQL);
+                query.executeUpdate();
+                transaction.commit();
+            } catch (Exception e) {
+                transaction.rollback();
+                throw new RuntimeException("Table deletion error", e);
+            }
         }
     }
 
     @Override
     public void saveUser(String name, String lastName, byte age) {
-        Session session = sessionFactory.openSession();
-        try {
-            session.beginTransaction();
-
-            User user = new User(name,lastName, age);
-            session.save(user);
-
-            session.getTransaction().commit();
-            System.out.println("New user - " + name + " has been added to the DB." +
-                    "(Hibernate)");
-        } catch (Exception e) {
-            if (session.getTransaction() != null) {
-                session.getTransaction().rollback();
-            } throw new RuntimeException("Saving new user error", e);
-        } finally {
-            session.close();
+        try (Session session = sessionFactory.openSession()) {
+            Transaction transaction = session.beginTransaction();
+            try {
+                User user = new User(name,lastName, age);
+                session.save(user);
+                transaction.commit();
+            } catch (Exception e) {
+                transaction.rollback();
+                throw new RuntimeException("Saving user error", e);
+            }
         }
     }
 
     @Override
     public void removeUserById(long id) {
-        Session session = sessionFactory.openSession();
-        try {
-            session.beginTransaction();
-
-            User user = session.get(User.class, id);
-            if(user != null) {
-                session.delete(user);
-                System.out.println("User with ID = " + id + " has been deleted (Hibernate)");
+        try (Session session = sessionFactory.openSession()) {
+            Transaction transaction = session.beginTransaction();
+            try {
+                User user = session.get(User.class, id);
+                if(user != null) {
+                    session.delete(user);
+                }
+                transaction.commit();
+            } catch (Exception e) {
+                transaction.rollback();
+                throw new RuntimeException("Removing user by ID error", e);
             }
-
-            session.getTransaction().commit();
-        } catch (Exception e) {
-            if (session.getTransaction() != null) {
-                session.getTransaction().rollback();
-            } throw new RuntimeException("User deletion error", e);
-        } finally {
-            session.close();
         }
     }
 
     @Override
     public List<User> getAllUsers() {
-        Session session = sessionFactory.openSession();
-        try {
+        try (Session session = sessionFactory.openSession()) {
             return session.createQuery("FROM User", User.class).list();
-        } finally {
-            session.close();
         }
     }
 
     @Override
     public void cleanUsersTable() {
-        Session session = sessionFactory.openSession();
-        try {
-            session.beginTransaction();
-
-            session.createQuery("DELETE FROM User").executeUpdate();
-
-            session.getTransaction().commit();
-            System.out.println("Users table has been cleared (Hibernate). ");
-        } catch (Exception e) {
-            if (session.getTransaction() != null) {
-                session.getTransaction().rollback();
-            } throw new RuntimeException("Clearing table error", e);
-        } finally {
-            session.close();
+        try (Session session = sessionFactory.openSession()) {
+            Transaction transaction = session.beginTransaction();
+            try {
+                session.createQuery("DELETE FROM User").executeUpdate();
+                transaction.commit();
+            } catch (Exception e) {
+                transaction.rollback();
+                throw new RuntimeException("Cleaning up table error", e);
+            }
         }
     }
 }
