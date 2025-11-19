@@ -17,7 +17,7 @@ public class Util {
     private static final String PWD = "1111";
     private static final String DRV = "com.mysql.cj.jdbc.Driver";
 
-    private static SessionFactory sessionFactory;
+    private SessionFactory sessionFactory;
 
     public static Connection getConnection() {
         try {
@@ -28,7 +28,7 @@ public class Util {
         }
     }
 
-    public static SessionFactory getSessionFactory() {
+    public SessionFactory getSessionFactory() {
         if (sessionFactory == null) {
             try {
                 Configuration configuration = new Configuration();

@@ -12,18 +12,19 @@ import java.util.List;
 public class UserDaoHibernateImpl implements UserDao {
 
     private static final String CREATE_TABLE_SQL =
-            "CREATE TABLE IF NOT EXISTS users (" +
-            "id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
-            "name VARCHAR(45) NOT NULL, " +
-            "lastName VARCHAR(45) NOT NULL, " +
-            "age TINYINT NOT NULL)";
+        "CREATE TABLE IF NOT EXISTS users (" +
+        "id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
+        "name VARCHAR(45) NOT NULL, " +
+        "lastName VARCHAR(45) NOT NULL, " +
+        "age TINYINT NOT NULL)";
 
     private static final String DROP_TABLE_SQL = "DROP TABLE IF EXISTS users";
 
     private final SessionFactory sessionFactory;
 
     public UserDaoHibernateImpl() {
-        this.sessionFactory = Util.getSessionFactory();
+        Util util = new Util();
+        this.sessionFactory = util.getSessionFactory();
     }
 
 
@@ -32,14 +33,9 @@ public class UserDaoHibernateImpl implements UserDao {
 
         try (Session session = sessionFactory.openSession()) {
             Transaction transaction = session.beginTransaction();
-            try {
-                NativeQuery<?> query = session.createNativeQuery(CREATE_TABLE_SQL);
-                query.executeUpdate();
-                transaction.commit();
-            } catch (Exception e) {
-                transaction.rollback();
-                throw new RuntimeException("Table creation error", e);
-            }
+            NativeQuery<?> query = session.createNativeQuery(CREATE_TABLE_SQL);
+            query.executeUpdate();
+            transaction.commit();
         }
     }
 
@@ -47,14 +43,9 @@ public class UserDaoHibernateImpl implements UserDao {
     public void dropUsersTable() {
         try (Session session = sessionFactory.openSession()) {
             Transaction transaction = session.beginTransaction();
-            try {
-                NativeQuery<?> query = session.createNativeQuery(DROP_TABLE_SQL);
-                query.executeUpdate();
-                transaction.commit();
-            } catch (Exception e) {
-                transaction.rollback();
-                throw new RuntimeException("Table deletion error", e);
-            }
+            NativeQuery<?> query = session.createNativeQuery(DROP_TABLE_SQL);
+            query.executeUpdate();
+            transaction.commit();
         }
     }
 
