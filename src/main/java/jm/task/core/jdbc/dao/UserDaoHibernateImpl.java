@@ -20,12 +20,7 @@ public class UserDaoHibernateImpl implements UserDao {
 
     private static final String DROP_TABLE_SQL = "DROP TABLE IF EXISTS users";
 
-    private final SessionFactory sessionFactory;
-
-    public UserDaoHibernateImpl() {
-        Util util = new Util();
-        this.sessionFactory = util.getSessionFactory();
-    }
+    private final SessionFactory sessionFactory = new Util().getSessionFactory();
 
 
     @Override
@@ -53,14 +48,9 @@ public class UserDaoHibernateImpl implements UserDao {
     public void saveUser(String name, String lastName, byte age) {
         try (Session session = sessionFactory.openSession()) {
             Transaction transaction = session.beginTransaction();
-            try {
-                User user = new User(name,lastName, age);
-                session.save(user);
-                transaction.commit();
-            } catch (Exception e) {
-                transaction.rollback();
-                throw new RuntimeException("Saving user error", e);
-            }
+            User user = new User(name,lastName, age);
+            session.save(user);
+            transaction.commit();
         }
     }
 
@@ -68,16 +58,11 @@ public class UserDaoHibernateImpl implements UserDao {
     public void removeUserById(long id) {
         try (Session session = sessionFactory.openSession()) {
             Transaction transaction = session.beginTransaction();
-            try {
                 User user = session.get(User.class, id);
                 if(user != null) {
                     session.delete(user);
                 }
                 transaction.commit();
-            } catch (Exception e) {
-                transaction.rollback();
-                throw new RuntimeException("Removing user by ID error", e);
-            }
         }
     }
 
@@ -85,6 +70,8 @@ public class UserDaoHibernateImpl implements UserDao {
     public List<User> getAllUsers() {
         try (Session session = sessionFactory.openSession()) {
             return session.createQuery("FROM User", User.class).list();
+        } catch (Exception e) {
+            throw new RuntimeException("Getting users error", e);
         }
     }
 
@@ -92,13 +79,8 @@ public class UserDaoHibernateImpl implements UserDao {
     public void cleanUsersTable() {
         try (Session session = sessionFactory.openSession()) {
             Transaction transaction = session.beginTransaction();
-            try {
-                session.createQuery("DELETE FROM User").executeUpdate();
-                transaction.commit();
-            } catch (Exception e) {
-                transaction.rollback();
-                throw new RuntimeException("Cleaning up table error", e);
-            }
+            session.createQuery("DELETE FROM User").executeUpdate();
+            transaction.commit();
         }
     }
 }
