@@ -14,7 +14,7 @@ public class Util {
 
     private static final String HOST = "jdbc:mysql://localhost:3306/jdbc_test";
     private static final String USER = "root";
-    private static final String PWD = "1111";
+    private static final String PWD = "root";
     private static final String DRV = "com.mysql.cj.jdbc.Driver";
 
     private SessionFactory sessionFactory;

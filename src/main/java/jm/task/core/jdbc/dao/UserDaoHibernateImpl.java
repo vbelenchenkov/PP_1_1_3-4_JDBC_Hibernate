@@ -31,6 +31,8 @@ public class UserDaoHibernateImpl implements UserDao {
             NativeQuery<?> query = session.createNativeQuery(CREATE_TABLE_SQL);
             query.executeUpdate();
             transaction.commit();
+        } catch (Exception e) {
+            throw new RuntimeException("Table creation error", e);
         }
     }
 
@@ -41,6 +43,8 @@ public class UserDaoHibernateImpl implements UserDao {
             NativeQuery<?> query = session.createNativeQuery(DROP_TABLE_SQL);
             query.executeUpdate();
             transaction.commit();
+        } catch (Exception e) {
+            throw new RuntimeException("Table deletion error", e);
         }
     }
 
@@ -48,9 +52,14 @@ public class UserDaoHibernateImpl implements UserDao {
     public void saveUser(String name, String lastName, byte age) {
         try (Session session = sessionFactory.openSession()) {
             Transaction transaction = session.beginTransaction();
-            User user = new User(name,lastName, age);
-            session.save(user);
-            transaction.commit();
+            try {
+                User user = new User(name, lastName, age);
+                session.save(user);
+                transaction.commit();
+            } catch (Exception e) {
+                transaction.rollback();
+                throw new RuntimeException("User saving error", e);
+            }
         }
     }
 
@@ -58,11 +67,16 @@ public class UserDaoHibernateImpl implements UserDao {
     public void removeUserById(long id) {
         try (Session session = sessionFactory.openSession()) {
             Transaction transaction = session.beginTransaction();
+            try {
                 User user = session.get(User.class, id);
-                if(user != null) {
+                if (user != null) {
                     session.delete(user);
                 }
                 transaction.commit();
+            } catch (Exception e) {
+                transaction.rollback();
+                throw new RuntimeException("User deletion error", e);
+            }
         }
     }
 
@@ -79,8 +93,13 @@ public class UserDaoHibernateImpl implements UserDao {
     public void cleanUsersTable() {
         try (Session session = sessionFactory.openSession()) {
             Transaction transaction = session.beginTransaction();
-            session.createQuery("DELETE FROM User").executeUpdate();
-            transaction.commit();
+            try {
+                session.createQuery("DELETE FROM User").executeUpdate();
+                transaction.commit();
+            } catch (Exception e) {
+                transaction.rollback();
+                throw new RuntimeException("Table cleaning error", e);
+            }
         }
     }
 }
