@@ -20,13 +20,7 @@ public class UserDaoHibernateImpl implements UserDao {
 
     private static final String DROP_TABLE_SQL = "DROP TABLE IF EXISTS users";
 
-    private final SessionFactory sessionFactory;
-
-    public UserDaoHibernateImpl() {
-        Util util = new Util();
-        this.sessionFactory = util.getSessionFactory();
-    }
-
+    private final SessionFactory sessionFactory = new Util().getSessionFactory();
 
     @Override
     public void createUsersTable() {
@@ -37,9 +31,6 @@ public class UserDaoHibernateImpl implements UserDao {
             query.executeUpdate();
             transaction.commit();
         } catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
             throw new RuntimeException("Users table creation error", e);
         }
     }
@@ -53,9 +44,6 @@ public class UserDaoHibernateImpl implements UserDao {
             query.executeUpdate();
             transaction.commit();
         } catch (Exception e) {
-            if (transaction != null) {
-                transaction.rollback();
-            }
             throw new RuntimeException("Users table deletion error", e);
         }
     }
